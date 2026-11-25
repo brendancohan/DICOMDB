@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Import .docx - DicomDB{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Assisted .docx Import</h1>
+</div>
+
+{% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+<div class="card">
+  <form method="post" action="/import/parse" enctype="multipart/form-data" class="flex">
+    <input type="file" name="file" accept=".docx" required>
+    <button type="submit" class="btn btn-primary">Extract &amp; Preview</button>
+  </form>
+</div>
+
+{% if extracted %}
+<div class="split-grid">
+  <div class="card">
+    <h2 style="margin-top:0; font-size:1.05rem;">Extracted from {{ extracted.filename }}</h2>
+    {% if extracted.suggestions.ip_addresses or extracted.suggestions.ae_titles %}
+      <div class="alert alert-warn small">
+        Detected IPs: <span class="mono">{{ extracted.suggestions.ip_addresses|join(', ') or 'None' }}</span><br>
+        Detected Ports: <span class="mono">{{ extracted.suggestions.ports|join(', ') or 'None' }}</span><br>
+        Detected AE Candidates: <span class="mono">{{ extracted.suggestions.ae_titles|join(', ') or 'None' }}</span>
+      </div>
+    {% endif %}
+
+    {% for p in extracted.paragraphs %}
+      <p class="small" style="margin:0.35rem 0;">{{ p }}</p>
+    {% endfor %}
+
+    {% for tbl in extracted.tables %}
+      <div class="table-wrap" style="margin-top:0.75rem;">
+        <table>
+          {% for row in tbl %}
+            <tr>
+              {% for cell in row %}
+                <td class="small">{{ cell }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </table>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div>
+    <form method="post" action="/modalities/new">
+      {% include "_modality_form_fields.html" %}
+      <button type="submit" class="btn btn-primary">Save Modality to DicomDB</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

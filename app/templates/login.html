@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - DicomDB</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+  <main class="container" style="max-width: 420px; margin-top: 5rem;">
+    <div class="card">
+      <h1 style="margin-top:0;">DicomDB</h1>
+      <p class="muted small">Internal PACS Modality Inventory</p>
+      {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+      {% endif %}
+      <form method="post" action="/login">
+        <div class="field" style="margin-bottom:0.75rem;">
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" required autofocus autocomplete="username">
+        </div>
+        <div class="field" style="margin-bottom:1rem;">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Sign In</button>
+      </form>
+    </div>
+  </main>
+</body>
+</html>

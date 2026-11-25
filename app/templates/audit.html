@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Audit Log - DicomDB{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Audit Log</h1>
+</div>
+
+<div class="card">
+  <form method="get" action="/audit" class="form-grid" style="align-items:end;">
+    <div class="field">
+      <label for="q">Search</label>
+      <input id="q" name="q" type="text" value="{{ q }}" placeholder="Device, editor, field...">
+    </div>
+    <div class="field">
+      <label for="entity_type">Entity</label>
+      <select id="entity_type" name="entity_type">
+        <option value="">All</option>
+        <option value="modality" {% if entity_type == 'modality' %}selected{% endif %}>Modality</option>
+        <option value="destination" {% if entity_type == 'destination' %}selected{% endif %}>Destination</option>
+        <option value="field_definition" {% if entity_type == 'field_definition' %}selected{% endif %}>Custom Field</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="action">Action</label>
+      <select id="action" name="action">
+        <option value="">All</option>
+        <option value="create" {% if action == 'create' %}selected{% endif %}>create</option>
+        <option value="update" {% if action == 'update' %}selected{% endif %}>update</option>
+        <option value="delete" {% if action == 'delete' %}selected{% endif %}>delete</option>
+        <option value="archive" {% if action == 'archive' %}selected{% endif %}>archive</option>
+      </select>
+    </div>
+    <div class="flex">
+      <button type="submit" class="btn btn-primary">Filter</button>
+      <a href="/audit" class="btn">Reset</a>
+    </div>
+  </form>
+</div>
+
+<div class="card table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>Editor</th>
+        <th>Entity</th>
+        <th>Action</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td class="small muted" style="white-space:nowrap;">{{ log.timestamp }}</td>
+        <td><strong>{{ log.editor_label }}</strong></td>
+        <td>{{ log.entity_type }}: <strong>{{ log.entity_name }}</strong></td>
+        <td><span class="badge">{{ log.action }}</span></td>
+        <td class="mono small">{{ log.changes_json }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="muted">No audit entries found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

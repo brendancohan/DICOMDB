@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Conflicts - DicomDB{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>DICOM Conflicts &amp; Validation</h1>
+</div>
+
+{% if conflicts.total_count == 0 %}
+  <div class="card">
+    <p class="test-ok" style="margin:0;">No duplicate AE Titles, IP:Port collisions, or invalid AE Title formats detected.</p>
+  </div>
+{% endif %}
+
+{% if conflicts.duplicate_aets %}
+<div class="card">
+  <h2 style="margin-top:0; font-size:1.05rem;">Duplicate AE Titles</h2>
+  {% for group in conflicts.duplicate_aets %}
+    <div style="margin-bottom:0.75rem;">
+      <strong class="mono">{{ group.ae_title }}</strong>
+      <ul>
+        {% for e in group.entries %}
+          <li><a href="/modalities/{{ e.modality_id }}">{{ e.device_name }}</a> ({{ e.role_label or 'No role' }})</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if conflicts.duplicate_ip_ports %}
+<div class="card">
+  <h2 style="margin-top:0; font-size:1.05rem;">IP:Port Collisions</h2>
+  {% for group in conflicts.duplicate_ip_ports %}
+    <div style="margin-bottom:0.75rem;">
+      <strong class="mono">{{ group.endpoint }}</strong>
+      <ul>
+        {% for e in group.entries %}
+          <li><a href="/modalities/{{ e.modality_id }}">{{ e.device_name }}</a> &mdash; <span class="mono">{{ e.ae_title }}</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if conflicts.invalid_aets %}
+<div class="card">
+  <h2 style="margin-top:0; font-size:1.05rem;">Invalid AE Title Formats</h2>
+  <table>
+    <thead><tr><th>Device</th><th>AE Title</th><th>Issues</th></tr></thead>
+    <tbody>
+      {% for item in conflicts.invalid_aets %}
+      <tr>
+        <td><a href="/modalities/{{ item.modality_id }}">{{ item.device_name }}</a></td>
+        <td class="mono">{{ item.ae_title }}</td>
+        <td style="color:var(--warn);">{{ item.issues|join(' ') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

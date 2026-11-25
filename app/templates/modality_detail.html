@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}{{ modality.device_name }} - DicomDB{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ modality.device_name }} <span class="badge badge-info">{{ modality.modality_type }}</span></h1>
+    <div class="small muted">{{ modality.manufacturer }} {{ modality.model }} &bull; {{ modality.location or 'No location' }}</div>
+  </div>
+  <div class="flex">
+    <a href="/modalities/{{ modality.id }}/edit" class="btn btn-primary">Edit</a>
+    <form method="post" action="/modalities/{{ modality.id }}/delete" onsubmit="return confirm('Delete {{ modality.device_name }}?');" style="margin:0;">
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+  </div>
+</div>
+
+<div class="split-grid">
+  <div class="card">
+    <h2 style="margin-top:0; font-size:1.05rem;">Core Details</h2>
+    <table>
+      <tr><th>Status</th><td>{{ modality.status }}</td></tr>
+      <tr><th>Primary IP</th><td class="mono">{{ modality.ip_address or '—' }}</td></tr>
+      <tr><th>Manufacturer</th><td>{{ modality.manufacturer or '—' }}</td></tr>
+      <tr><th>Model</th><td>{{ modality.model or '—' }}</td></tr>
+      <tr><th>Location</th><td>{{ modality.location or '—' }}</td></tr>
+      <tr><th>Updated</th><td class="small muted">{{ modality.updated_at }}</td></tr>
+      <tr><th>Notes</th><td style="white-space:pre-wrap;">{{ modality.notes or '—' }}</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0; font-size:1.05rem;">Custom Fields</h2>
+    {% if sections %}
+      {% for section_name, fields in sections.items() %}
+        <h3 class="small muted" style="margin:0.75rem 0 0.25rem;">{{ section_name }}</h3>
+        <table>
+          {% for f in fields %}
+            <tr>
+              <th style="width:40%;">{{ f.label }}</th>
+              <td>
+                {% set val = modality.custom_fields.get(f.key, '') %}
+                {% if f.field_type == 'boolean' %}
+                  {{ 'Yes' if val else 'No' }}
+                {% elif f.field_type == 'url' and val %}
+                  <a href="{{ val }}" target="_blank" rel="noopener">{{ val }}</a>
+                {% else %}
+                  {{ val if val != '' else '—' }}
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </table>
+      {% endfor %}
+    {% else %}
+      <p class="muted small">No custom fields defined yet. <a href="/fields">Create custom fields</a>.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0; font-size:1.05rem;">AE Titles &amp; Connectivity</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">AE Title</th>
+          <th scope="col">Role</th>
+          <th scope="col">IP</th>
+          <th scope="col">Port</th>
+          <th scope="col">Notes</th>
+          <th scope="col">Connectivity Test</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ae in modality.ae_titles %}
+        {% set effective_ip = ae.ip_address or modality.ip_address %}
+        <tr>
+          <td class="mono">
+            <strong>{{ ae.ae_title }}</strong>
+            {% if ae.id in ae_warnings %}
+              <div class="small" style="color:var(--warn);">{{ ae_warnings[ae.id]|join(' ') }}</div>
+            {% endif %}
+          </td>
+          <td>{{ ae.role_label or '—' }}</td>
+          <td class="mono">{{ effective_ip or '—' }}</td>
+          <td class="mono">{{ ae.port or '—' }}</td>
+          <td class="small">{{ ae.notes }}</td>
+          <td>
+            {% if effective_ip and ae.port %}
+              <button type="button" class="btn btn-sm"
+                onclick="runConnectivityTest('/api/test-tcp', {host: '{{ effective_ip }}', port: {{ ae.port }}}, 'ae-res-{{ ae.id }}')">
+                TCP
+              </button>
+              <button type="button" class="btn btn-sm"
+                onclick="runConnectivityTest('/api/test-echo', {host: '{{ effective_ip }}', port: {{ ae.port }}, called_aet: '{{ ae.ae_title }}'}, 'ae-res-{{ ae.id }}')">
+                C-ECHO
+              </button>
+              <span id="ae-res-{{ ae.id }}" class="test-result"></span>
+            {% else %}
+              <span class="muted small">Need IP &amp; Port</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="muted">No AE Titles configured.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0; font-size:1.05rem;">Routing Destinations</h2>
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Source AE</th>
+        <th scope="col">Direction</th>
+        <th scope="col">Destination</th>
+        <th scope="col">Dest AE / Endpoint</th>
+        <th scope="col">Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for rt in modality.routes %}
+      <tr>
+        <td class="mono">{{ rt.ae_title or 'Any' }}</td>
+        <td>{{ rt.direction }}</td>
+        <td><a href="/destinations/{{ rt.destination_id }}">{{ rt.destination_name }}</a> <span class="badge">{{ rt.dest_type }}</span></td>
+        <td class="mono">{{ rt.dest_ae_title }} ({{ rt.dest_ip }}:{{ rt.dest_port or '' }})</td>
+        <td class="small">{{ rt.notes }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="muted">No routes configured.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if recent_audit %}
+<div class="card">
+  <h2 style="margin-top:0; font-size:1.05rem;">Recent Changes</h2>
+  <table>
+    <thead><tr><th>Time</th><th>Editor</th><th>Action</th><th>Changes</th></tr></thead>
+    <tbody>
+      {% for log in recent_audit %}
+      <tr>
+        <td class="small muted">{{ log.timestamp }}</td>
+        <td>{{ log.editor_label }}</td>
+        <td><span class="badge">{{ log.action }}</span></td>
+        <td class="mono small">{{ log.changes_json }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

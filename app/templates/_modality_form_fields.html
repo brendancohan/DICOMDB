@@ -1,0 +1,205 @@
+<div class="card">
+  <h2 style="margin-top:0; font-size:1.05rem;">Core Device Info</h2>
+  <div class="form-grid">
+    <div class="field">
+      <label for="device_name">Device Name *</label>
+      <input id="device_name" name="device_name" type="text" required value="{{ modality.device_name }}">
+    </div>
+    <div class="field">
+      <label for="modality_type">Modality Type *</label>
+      <select id="modality_type" name="modality_type">
+        {% for t in modality_types %}
+          <option value="{{ t }}" {% if modality.modality_type == t %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="manufacturer">Manufacturer</label>
+      <input id="manufacturer" name="manufacturer" type="text" value="{{ modality.manufacturer }}">
+    </div>
+    <div class="field">
+      <label for="model">Model</label>
+      <input id="model" name="model" type="text" value="{{ modality.model }}">
+    </div>
+    <div class="field">
+      <label for="location">Location / Room</label>
+      <input id="location" name="location" type="text" value="{{ modality.location }}">
+    </div>
+    <div class="field">
+      <label for="ip_address">Primary IP / Hostname</label>
+      <input id="ip_address" name="ip_address" type="text" value="{{ modality.ip_address }}">
+    </div>
+    <div class="field">
+      <label for="status">Status</label>
+      <select id="status" name="status">
+        {% for s in modality_statuses %}
+          <option value="{{ s }}" {% if modality.status == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="field" style="margin-top:0.85rem;">
+    <label for="notes">Notes</label>
+    <textarea id="notes" name="notes" rows="3">{{ modality.notes }}</textarea>
+  </div>
+</div>
+
+<div class="card">
+  <div class="page-header" style="margin-bottom:0.5rem;">
+    <h2 style="margin:0; font-size:1.05rem;">AE Titles (Modular)</h2>
+    <button type="button" class="btn btn-sm" onclick="addAeRow()">+ Add AE Title</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>AE Title</th>
+          <th>Role (Store, MWL, MPPS...)</th>
+          <th>IP Override</th>
+          <th>Port</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="ae-rows">
+        {% for ae in modality.ae_titles %}
+        <tr>
+          <td><input name="ae_title" type="text" maxlength="16" value="{{ ae.ae_title }}" placeholder="e.g. CT1_STORE"></td>
+          <td><input name="ae_role_label" type="text" value="{{ ae.role_label }}" placeholder="Store"></td>
+          <td><input name="ae_ip_address" type="text" value="{{ ae.ip_address }}" placeholder="Optional"></td>
+          <td><input name="ae_port" type="number" min="1" max="65535" value="{{ ae.port or '' }}" style="width:90px;"></td>
+          <td><input name="ae_notes" type="text" value="{{ ae.notes }}"></td>
+          <td><button type="button" class="btn btn-sm btn-danger" onclick="this.closest('tr').remove()">Remove</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <template id="ae-row-template">
+    <tr>
+      <td><input name="ae_title" type="text" maxlength="16" placeholder="e.g. CT1_MWL"></td>
+      <td><input name="ae_role_label" type="text" placeholder="MWL"></td>
+      <td><input name="ae_ip_address" type="text" placeholder="Optional"></td>
+      <td><input name="ae_port" type="number" min="1" max="65535" style="width:90px;"></td>
+      <td><input name="ae_notes" type="text"></td>
+      <td><button type="button" class="btn btn-sm btn-danger" onclick="this.closest('tr').remove()">Remove</button></td>
+    </tr>
+  </template>
+</div>
+
+<div class="card">
+  <div class="page-header" style="margin-bottom:0.5rem;">
+    <h2 style="margin:0; font-size:1.05rem;">Routing Destinations</h2>
+    <button type="button" class="btn btn-sm" onclick="addRouteRow()">+ Add Route</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Destination</th>
+          <th>Source AE (Index)</th>
+          <th>Direction</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="route-rows">
+        {% for rt in modality.routes %}
+        <tr>
+          <td>
+            <select name="route_destination_id">
+              <option value="">-- Select --</option>
+              {% for d in destinations %}
+                <option value="{{ d.id }}" {% if rt.destination_id == d.id %}selected{% endif %}>{{ d.name }} ({{ d.dest_type }})</option>
+              {% endfor %}
+            </select>
+          </td>
+          <td>
+            <select name="route_ae_index">
+              <option value="">Any</option>
+              {% for ae in modality.ae_titles %}
+                <option value="{{ loop.index0 }}" {% if rt.ae_title_id == ae.id %}selected{% endif %}>{{ ae.ae_title or ('AE #' ~ loop.index) }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          <td>
+            <select name="route_direction">
+              {% for dir in route_directions %}
+                <option value="{{ dir }}" {% if rt.direction == dir %}selected{% endif %}>{{ dir }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          <td><input name="route_notes" type="text" value="{{ rt.notes }}"></td>
+          <td><button type="button" class="btn btn-sm btn-danger" onclick="this.closest('tr').remove()">Remove</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <template id="route-row-template">
+    <tr>
+      <td>
+        <select name="route_destination_id">
+          <option value="">-- Select --</option>
+          {% for d in destinations %}
+            <option value="{{ d.id }}">{{ d.name }} ({{ d.dest_type }})</option>
+          {% endfor %}
+        </select>
+      </td>
+      <td>
+        <select name="route_ae_index">
+          <option value="">Any</option>
+          {% for ae in modality.ae_titles %}
+            <option value="{{ loop.index0 }}">{{ ae.ae_title or ('AE #' ~ loop.index) }}</option>
+          {% endfor %}
+        </select>
+      </td>
+      <td>
+        <select name="route_direction">
+          {% for dir in route_directions %}
+            <option value="{{ dir }}">{{ dir }}</option>
+          {% endfor %}
+        </select>
+      </td>
+      <td><input name="route_notes" type="text"></td>
+      <td><button type="button" class="btn btn-sm btn-danger" onclick="this.closest('tr').remove()">Remove</button></td>
+    </tr>
+  </template>
+</div>
+
+{% if field_defs %}
+<div class="card">
+  <h2 style="margin-top:0; font-size:1.05rem;">Custom Fields</h2>
+  <div class="form-grid">
+    {% for f in field_defs %}
+      {% set val = modality.custom_fields.get(f.key, '') %}
+      <div class="field">
+        <label for="cf_{{ f.key }}">{{ f.label }}{% if f.is_required %} *{% endif %} <span class="muted">({{ f.section }})</span></label>
+        {% if f.field_type == 'dropdown' %}
+          <select id="cf_{{ f.key }}" name="cf_{{ f.key }}" {% if f.is_required %}required{% endif %}>
+            <option value="">-- Select --</option>
+            {% for opt in f.options %}
+              <option value="{{ opt }}" {% if val == opt %}selected{% endif %}>{{ opt }}</option>
+            {% endfor %}
+          </select>
+        {% elif f.field_type == 'boolean' %}
+          <label class="flex" style="font-weight:normal;">
+            <input id="cf_{{ f.key }}" name="cf_{{ f.key }}" type="checkbox" value="1" {% if val %}checked{% endif %}>
+            Enabled / Yes
+          </label>
+        {% elif f.field_type == 'textarea' %}
+          <textarea id="cf_{{ f.key }}" name="cf_{{ f.key }}" rows="2" {% if f.is_required %}required{% endif %}>{{ val }}</textarea>
+        {% elif f.field_type == 'number' %}
+          <input id="cf_{{ f.key }}" name="cf_{{ f.key }}" type="number" step="any" value="{{ val }}" {% if f.is_required %}required{% endif %}>
+        {% elif f.field_type == 'date' %}
+          <input id="cf_{{ f.key }}" name="cf_{{ f.key }}" type="date" value="{{ val }}" {% if f.is_required %}required{% endif %}>
+        {% elif f.field_type == 'url' %}
+          <input id="cf_{{ f.key }}" name="cf_{{ f.key }}" type="url" value="{{ val }}" {% if f.is_required %}required{% endif %}>
+        {% else %}
+          <input id="cf_{{ f.key }}" name="cf_{{ f.key }}" type="text" value="{{ val }}" {% if f.is_required %}required{% endif %}>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ dest.name }} - DicomDB{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ dest.name }} <span class="badge badge-info">{{ dest.dest_type }}</span></h1>
+    <div class="mono small muted">{{ dest.ae_title }} &bull; {{ dest.ip_address }}:{{ dest.port or '' }}</div>
+  </div>
+  <div class="flex">
+    {% if dest.ip_address and dest.port %}
+      <button type="button" class="btn btn-sm"
+        onclick="runConnectivityTest('/api/test-tcp', {host: '{{ dest.ip_address }}', port: {{ dest.port }}}, 'dest-test-res')">TCP</button>
+      {% if dest.ae_title %}
+        <button type="button" class="btn btn-sm"
+          onclick="runConnectivityTest('/api/test-echo', {host: '{{ dest.ip_address }}', port: {{ dest.port }}, called_aet: '{{ dest.ae_title }}'}, 'dest-test-res')">C-ECHO</button>
+      {% endif %}
+      <span id="dest-test-res" class="test-result"></span>
+    {% endif %}
+    <form method="post" action="/destinations/{{ dest.id }}/delete" onsubmit="return confirm('Delete destination {{ dest.name }}?');" style="margin:0;">
+      <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0; font-size:1.05rem;">Modalities Routed Here ({{ routed_modalities|length }})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Device</th>
+        <th>Type</th>
+        <th>Location</th>
+        <th>Source AE</th>
+        <th>Direction</th>
+        <th>Route Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in routed_modalities %}
+      <tr>
+        <td><a href="/modalities/{{ m.id }}"><strong>{{ m.device_name }}</strong></a></td>
+        <td><span class="badge">{{ m.modality_type }}</span></td>
+        <td>{{ m.location }}</td>
+        <td class="mono">{{ m.source_ae_title or 'Any' }}</td>
+        <td>{{ m.direction }}</td>
+        <td class="small">{{ m.route_notes }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="muted">No modalities are currently routed to this destination.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

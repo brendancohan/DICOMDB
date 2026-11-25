@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Downtime Binder - DicomDB{% endblock %}
+{% block content %}
+<div class="page-header no-print">
+  <h1>PACS Downtime Binder (Active Modalities)</h1>
+  <button type="button" class="btn btn-primary" onclick="window.print()">Print / Save PDF</button>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;">Active Modalities ({{ modalities|length }})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Device</th>
+        <th>Type</th>
+        <th>Location</th>
+        <th>Primary IP</th>
+        <th>AE Titles</th>
+        <th>Routes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in modalities %}
+      <tr>
+        <td><strong>{{ m.device_name }}</strong><br><span class="small muted">{{ m.manufacturer }} {{ m.model }}</span></td>
+        <td>{{ m.modality_type }}</td>
+        <td>{{ m.location }}</td>
+        <td class="mono">{{ m.ip_address }}</td>
+        <td class="mono small">
+          {% for ae in m.ae_titles %}
+            <div>{{ ae.ae_title }}{% if ae.role_label %} ({{ ae.role_label }}){% endif %}{% if ae.port %}:{{ ae.port }}{% endif %}</div>
+          {% endfor %}
+        </td>
+        <td class="small">
+          {% for rt in m.routes %}
+            <div>{{ rt.direction }} &rarr; {{ rt.destination_name }}</div>
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;">Destinations ({{ destinations|length }})</h2>
+  <table>
+    <thead><tr><th>Name</th><th>Type</th><th>AE Title</th><th>Endpoint</th></tr></thead>
+    <tbody>
+      {% for d in destinations %}
+      <tr>
+        <td><strong>{{ d.name }}</strong></td>
+        <td>{{ d.dest_type }}</td>
+        <td class="mono">{{ d.ae_title }}</td>
+        <td class="mono">{{ d.ip_address }}{% if d.port %}:{{ d.port }}{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

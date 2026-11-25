@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Dynamic Fields - DicomDB{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Dynamic Custom Fields</h1>
+  <a href="/fields?show_archived={{ 0 if show_archived else 1 }}" class="btn">
+    {{ 'Hide Archived' if show_archived else 'Show Archived' }}
+  </a>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0; font-size:1.05rem;">Add New Field</h2>
+  <form method="post" action="/fields" class="form-grid" style="align-items:end;">
+    <div class="field">
+      <label for="label">Field Label *</label>
+      <input id="label" name="label" type="text" required placeholder="e.g. Software Version, VLAN">
+    </div>
+    <div class="field">
+      <label for="field_type">Type</label>
+      <select id="field_type" name="field_type">
+        {% for t in field_types %}
+          <option value="{{ t }}">{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="section">Section</label>
+      <input id="section" name="section" type="text" value="General" placeholder="Network, Hardware, Vendor...">
+    </div>
+    <div class="field">
+      <label for="options_text">Dropdown Options (comma-separated)</label>
+      <input id="options_text" name="options_text" type="text" placeholder="Opt A, Opt B">
+    </div>
+    <div class="flex">
+      <label class="small flex"><input type="checkbox" name="show_in_table" value="1" checked> Show in table</label>
+      <label class="small flex"><input type="checkbox" name="is_required" value="1"> Required</label>
+    </div>
+    <div>
+      <button type="submit" class="btn btn-primary">+ Add Field</button>
+    </div>
+  </form>
+</div>
+
+<div class="card table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Order</th>
+        <th>Label</th>
+        <th>Key</th>
+        <th>Type</th>
+        <th>Section</th>
+        <th>Table</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in fields %}
+      <tr>
+        <td class="flex">
+          <form method="post" action="/fields/{{ f.id }}/move" style="margin:0;">
+            <input type="hidden" name="direction" value="up">
+            <button type="submit" class="btn btn-sm">&uarr;</button>
+          </form>
+          <form method="post" action="/fields/{{ f.id }}/move" style="margin:0;">
+            <input type="hidden" name="direction" value="down">
+            <button type="submit" class="btn btn-sm">&darr;</button>
+          </form>
+        </td>
+        <td><strong>{{ f.label }}</strong></td>
+        <td class="mono small">{{ f.key }}</td>
+        <td><span class="badge">{{ f.field_type }}</span></td>
+        <td>{{ f.section }}</td>
+        <td>{{ 'Yes' if f.show_in_table else 'No' }}</td>
+        <td>
+          {% if f.archived %}<span class="badge">Archived</span>{% else %}<span class="badge badge-ok">Active</span>{% endif %}
+        </td>
+        <td>
+          <form method="post" action="/fields/{{ f.id }}/toggle-archive" style="margin:0;">
+            <button type="submit" class="btn btn-sm">{{ 'Restore' if f.archived else 'Archive' }}</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="muted">No custom fields defined yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

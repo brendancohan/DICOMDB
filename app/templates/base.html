@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}DicomDB{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+  <header class="topbar no-print">
+    <div class="topbar-left">
+      <a href="/" class="brand">DicomDB</a>
+      <a href="/" class="nav-link {% if active_nav == 'inventory' %}active{% endif %}">Inventory</a>
+      <a href="/destinations" class="nav-link {% if active_nav == 'destinations' %}active{% endif %}">Destinations</a>
+      <a href="/fields" class="nav-link {% if active_nav == 'fields' %}active{% endif %}">Dynamic Fields</a>
+      <a href="/conflicts" class="nav-link {% if active_nav == 'conflicts' %}active{% endif %}">
+        Conflicts
+        {% if conflict_count > 0 %}
+          <span class="badge badge-danger">{{ conflict_count }}</span>
+        {% endif %}
+      </a>
+      <a href="/import" class="nav-link {% if active_nav == 'import' %}active{% endif %}">Import .docx</a>
+      <a href="/audit" class="nav-link {% if active_nav == 'audit' %}active{% endif %}">Audit Log</a>
+    </div>
+    <div class="topbar-right">
+      <label class="editor-box" title="Optional initials/name recorded in the Audit Log">
+        Editor:
+        <input type="text" id="global-editor-label" placeholder="Initials" maxlength="32">
+      </label>
+      <a href="/export/csv" class="nav-link">CSV</a>
+      <a href="/export/xlsx" class="nav-link">Excel</a>
+      <a href="/export/downtime" class="nav-link" target="_blank">Downtime Binder</a>
+      <form method="post" action="/logout" style="margin:0;">
+        <button type="submit" class="btn btn-sm">Logout</button>
+      </form>
+    </div>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

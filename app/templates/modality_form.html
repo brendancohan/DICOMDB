@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{% if modality.id %}Edit {{ modality.device_name }}{% else %}Add Modality{% endif %} - DicomDB{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>{% if modality.id %}Edit {{ modality.device_name }}{% else %}Add Modality{% endif %}</h1>
+  <a href="{% if modality.id %}/modalities/{{ modality.id }}{% else %}/{% endif %}" class="btn">Cancel</a>
+</div>
+
+<form method="post" action="{% if modality.id %}/modalities/{{ modality.id }}/edit{% else %}/modalities/new{% endif %}">
+  {% include "_modality_form_fields.html" %}
+  <div class="flex" style="margin-top:1rem;">
+    <button type="submit" class="btn btn-primary">Save Modality</button>
+    <a href="{% if modality.id %}/modalities/{{ modality.id }}{% else %}/{% endif %}" class="btn">Cancel</a>
+  </div>
+</form>
+{% endblock %}
