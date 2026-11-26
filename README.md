@@ -46,8 +46,28 @@ Open `http://localhost:8000` (or your configured `DICOMDB_PORT`) and sign in wit
 .\scripts\install_windows_service.ps1 -NssmPath "C:\nssm\nssm.exe"
 ```
 
+**If PowerShell scripts are disabled on the server**, run NSSM directly from an Administrator Command Prompt (replace `C:\DicomDB` with your actual path):
+```cmd
+C:\nssm\nssm.exe install DicomDB C:\DicomDB\.venv\Scripts\python.exe C:\DicomDB\run.py
+C:\nssm\nssm.exe set DicomDB AppDirectory C:\DicomDB
+C:\nssm\nssm.exe set DicomDB DisplayName "DicomDB PACS Inventory"
+C:\nssm\nssm.exe set DicomDB Start SERVICE_AUTO_START
+C:\nssm\nssm.exe set DicomDB AppStdout C:\DicomDB\data\service_stdout.log
+C:\nssm\nssm.exe set DicomDB AppStderr C:\DicomDB\data\service_stderr.log
+C:\nssm\nssm.exe start DicomDB
+```
+*(Or run `C:\nssm\nssm.exe install DicomDB` and enter those three fields in the NSSM GUI.)*
+
 ### Schedule Nightly Hot Backups (Task Scheduler)
-Creates a 2:00 AM daily task using SQLite's online `.backup()` API (safe with WAL mode):
+Uses SQLite's online `.backup()` API (safe with WAL mode).
+
+**Without PowerShell scripts (pure Python):**
+Create a daily 2:00 AM task in Task Scheduler (`taskschd.msc`) with:
+- **Program/script:** `C:\DicomDB\.venv\Scripts\python.exe`
+- **Arguments:** `scripts\backup_db.py`
+- **Start in:** `C:\DicomDB`
+
+**Or via PowerShell:**
 ```powershell
 $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -File C:\DicomDB\scripts\backup_db.ps1" -WorkingDirectory "C:\DicomDB"
 $Trigger = New-ScheduledTaskTrigger -Daily -At 2:00AM
