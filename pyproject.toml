@@ -1,8 +1,13 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "dicomdb"
 version = "0.1.0"
 description = "Lightweight internal PACS modality inventory and configuration database"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",

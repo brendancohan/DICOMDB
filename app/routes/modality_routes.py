@@ -16,6 +16,7 @@ from app.models import (
     ROUTE_DIRECTIONS,
     delete_modality,
     get_modality,
+    get_setting,
     list_audit_logs,
     list_destinations,
     list_field_definitions,
@@ -36,6 +37,7 @@ class EchoTestRequest(BaseModel):
     host: str
     port: int
     called_aet: str
+    calling_aet: Optional[str] = None
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -237,6 +239,47 @@ def modality_detail(
             sections=sections,
             ae_warnings=ae_warnings,
             recent_audit=recent_audit,
+            default_calling_aet=get_setting(conn, "calling_aet", settings.calling_aet),
+        ),
+    )
+
+
+@router.get("/modalities/{modality_id}/clone", response_class=HTMLResponse)
+def clone_modality_page(
+    modality_id: int,
+    request: Request,
+    conn: sqlite3.Connection = Depends(get_db),
+) -> HTMLResponse:
+    modality = get_modality(conn, modality_id)
+    if not modality:
+        raise HTTPException(status_code=404, detail="Modality not found")
+    modality["id"] = None
+    modality["device_name"] = f"{modality['device_name']} (Copy)"
+    modality["ip_address"] = ""
+    modality["ae_titles"] = [
+        {
+            "ae_title": "",
+            "role_label": ae.get("role_label", ""),
+            "ip_address": "",
+            "port": ae.get("port") or "",
+            "notes": ae.get("notes", ""),
+        }
+        for ae in modality["ae_titles"]
+    ] or [{"ae_title": "", "role_label": "Store", "ip_address": "", "port": "", "notes": ""}]
+    return templates.TemplateResponse(
+        request,
+        "modality_form.html",
+        base_context(
+            request,
+            conn,
+            active_nav="inventory",
+            modality=modality,
+            field_defs=list_field_definitions(conn),
+            destinations=list_destinations(conn),
+            modality_types=MODALITY_TYPES,
+            modality_statuses=MODALITY_STATUSES,
+            route_directions=ROUTE_DIRECTIONS,
+            warnings=[],
         ),
     )
 
@@ -310,12 +353,23 @@ async def api_test_tcp(payload: TcpTestRequest) -> JSONResponse:
 
 
 @router.post("/api/test-echo")
-async def api_test_echo(payload: EchoTestRequest) -> JSONResponse:
+async def api_test_echo(
+    payload: EchoTestRequest,
+    conn: sqlite3.Connection = Depends(get_db),
+) -> JSONResponse:
+    calling_aet = (payload.calling_aet or "").strip() or get_setting(
+        conn, "calling_aet", settings.calling_aet
+    )
+    issues = validate_ae_title(calling_aet)
+    if issues:
+        return JSONResponse(
+            {"ok": False, "status": None, "latency_ms": None, "message": f"Invalid Calling AET: {' '.join(issues)}"}
+        )
     result = await asyncio.to_thread(
         test_dicom_echo,
         payload.host,
         payload.port,
         payload.called_aet,
-        settings.calling_aet,
+        calling_aet,
     )
     return JSONResponse(result)

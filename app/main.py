@@ -12,6 +12,7 @@ from app.deps import RedirectToLogin
 from app.routes import (
     audit_routes,
     auth_routes,
+    backup_routes,
     conflict_routes,
     destination_routes,
     export_routes,
@@ -51,3 +52,14 @@ app.include_router(conflict_routes.router)
 app.include_router(audit_routes.router)
 app.include_router(import_routes.router)
 app.include_router(export_routes.router)
+app.include_router(backup_routes.router)
+
+
+@app.get("/health")
+def health_check() -> dict[str, str]:
+    conn = get_connection(settings.db_path)
+    try:
+        conn.execute("SELECT 1").fetchone()
+    finally:
+        conn.close()
+    return {"status": "ok", "db": "ok"}

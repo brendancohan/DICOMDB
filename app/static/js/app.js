@@ -68,6 +68,22 @@ async function runConnectivityTest(url, payload, resultElId) {
   }
 }
 
+function runEchoTest(host, port, calledAet, resultElId) {
+  const input = document.getElementById("calling-aet-input");
+  const callingAet = input ? input.value.trim() : "";
+  return runConnectivityTest(
+    "/api/test-echo",
+    { host: host, port: port, called_aet: calledAet, calling_aet: callingAet },
+    resultElId
+  );
+}
+
+function runAllConnectivityTests(kind) {
+  document.querySelectorAll('[data-test-kind="' + kind + '"]').forEach((btn) => {
+    btn.click();
+  });
+}
+
 function addAeRow() {
   const container = document.getElementById("ae-rows");
   const tpl = document.getElementById("ae-row-template");

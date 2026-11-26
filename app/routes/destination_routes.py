@@ -4,12 +4,14 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.auth import get_editor_label
+from app.config import settings
 from app.deps import base_context, get_db, require_user, templates
 from app.models import (
     DESTINATION_TYPES,
     delete_destination,
     get_destination,
     get_destination_modalities,
+    get_setting,
     list_destinations,
     save_destination,
 )
@@ -84,6 +86,7 @@ def destination_detail(
             dest=dest,
             routed_modalities=routed_modalities,
             dest_types=DESTINATION_TYPES,
+            default_calling_aet=get_setting(conn, "calling_aet", settings.calling_aet),
         ),
     )
 

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Admin &amp; Backup - DicomDB{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Admin &amp; Database Backup</h1>
+</div>
+
+{% if message %}
+  <div class="alert" style="background:#dcfce7; border:1px solid #86efac; color:#15803d;">{{ message }}</div>
+{% endif %}
+{% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+<div class="split-grid">
+  <div class="card">
+    <h2 style="margin-top:0; font-size:1.05rem;">DICOM Settings</h2>
+    <p class="small muted">
+      Default Calling AE Title used when running <code>C-ECHO</code> connectivity tests
+      (can also be overridden per-test on any device page).
+    </p>
+    <form method="post" action="/backup/settings" class="flex">
+      <input type="text" name="calling_aet" value="{{ default_calling_aet }}" maxlength="16" required class="mono">
+      <button type="submit" class="btn btn-primary">Save Calling AET</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0; font-size:1.05rem;">Change Shared Password</h2>
+    <form method="post" action="/backup/password" class="form-grid" style="align-items:end;">
+      <div class="field">
+        <label for="current_password">Current Password</label>
+        <input id="current_password" name="current_password" type="password" required>
+      </div>
+      <div class="field">
+        <label for="new_password">New Password</label>
+        <input id="new_password" name="new_password" type="password" required>
+      </div>
+      <div class="field">
+        <label for="confirm_password">Confirm New Password</label>
+        <input id="confirm_password" name="confirm_password" type="password" required>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary">Update Password</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="split-grid">
+  <div class="card">
+    <h2 style="margin-top:0; font-size:1.05rem;">Download Live Backup</h2>
+    <p class="small muted">
+      Downloads a consistent, WAL-safe snapshot of the entire SQLite database
+      (modalities, AE titles, routes, custom fields, audit log, and shared password).
+    </p>
+    <a href="/backup/download" class="btn btn-primary">Download .db Backup</a>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0; font-size:1.05rem;">Restore from Backup</h2>
+    <p class="small muted">
+      Validates the uploaded <code>.db</code> file (SQLite integrity check + required tables)
+      and automatically saves a pre-restore safety snapshot of the current database before replacing it.
+    </p>
+    <form method="post" action="/backup/restore" enctype="multipart/form-data" class="flex"
+      onsubmit="return confirm('Restore database from this backup? Current data will be replaced (a safety snapshot will be saved automatically).');">
+      <input type="file" name="file" accept=".db,.sqlite,.sqlite3" required>
+      <button type="submit" class="btn btn-danger">Restore Database</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0; font-size:1.05rem;">Pre-Restore Safety Snapshots</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Filename</th>
+          <th>Size (KB)</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in safety_backups %}
+        <tr>
+          <td class="mono">{{ b.name }}</td>
+          <td>{{ b.size_kb }} KB</td>
+          <td class="small muted">{{ b.modified }}</td>
+          <td><a href="/backup/safety/{{ b.name }}" class="btn btn-sm">Download</a></td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="4" class="muted">No pre-restore safety snapshots yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

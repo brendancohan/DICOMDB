@@ -8,6 +8,7 @@
   </div>
   <div class="flex">
     <a href="/modalities/{{ modality.id }}/edit" class="btn btn-primary">Edit</a>
+    <a href="/modalities/{{ modality.id }}/clone" class="btn">Clone</a>
     <form method="post" action="/modalities/{{ modality.id }}/delete" onsubmit="return confirm('Delete {{ modality.device_name }}?');" style="margin:0;">
       <button type="submit" class="btn btn-danger">Delete</button>
     </form>
@@ -58,7 +59,18 @@
 </div>
 
 <div class="card">
-  <h2 style="margin-top:0; font-size:1.05rem;">AE Titles &amp; Connectivity</h2>
+  <div class="page-header" style="margin-bottom:0.5rem;">
+    <h2 style="margin:0; font-size:1.05rem;">AE Titles &amp; Connectivity</h2>
+    <div class="flex">
+      <label class="small muted flex" style="gap:0.3rem;">
+        Calling AET:
+        <input type="text" id="calling-aet-input" value="{{ default_calling_aet }}" maxlength="16"
+          class="mono" style="width:140px; padding:0.25rem 0.45rem; border:1px solid var(--border); border-radius:4px;">
+      </label>
+      <button type="button" class="btn btn-sm" onclick="runAllConnectivityTests('tcp')">Test All TCP</button>
+      <button type="button" class="btn btn-sm" onclick="runAllConnectivityTests('echo')">Test All C-ECHO</button>
+    </div>
+  </div>
   <div class="table-wrap">
     <table>
       <thead>
@@ -87,12 +99,12 @@
           <td class="small">{{ ae.notes }}</td>
           <td>
             {% if effective_ip and ae.port %}
-              <button type="button" class="btn btn-sm"
+              <button type="button" class="btn btn-sm" data-test-kind="tcp"
                 onclick="runConnectivityTest('/api/test-tcp', {host: '{{ effective_ip }}', port: {{ ae.port }}}, 'ae-res-{{ ae.id }}')">
                 TCP
               </button>
-              <button type="button" class="btn btn-sm"
-                onclick="runConnectivityTest('/api/test-echo', {host: '{{ effective_ip }}', port: {{ ae.port }}, called_aet: '{{ ae.ae_title }}'}, 'ae-res-{{ ae.id }}')">
+              <button type="button" class="btn btn-sm" data-test-kind="echo"
+                onclick="runEchoTest('{{ effective_ip }}', {{ ae.port }}, '{{ ae.ae_title }}', 'ae-res-{{ ae.id }}')">
                 C-ECHO
               </button>
               <span id="ae-res-{{ ae.id }}" class="test-result"></span>

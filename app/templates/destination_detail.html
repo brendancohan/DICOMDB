@@ -11,8 +11,11 @@
       <button type="button" class="btn btn-sm"
         onclick="runConnectivityTest('/api/test-tcp', {host: '{{ dest.ip_address }}', port: {{ dest.port }}}, 'dest-test-res')">TCP</button>
       {% if dest.ae_title %}
+        <input type="text" id="calling-aet-input" value="{{ default_calling_aet }}" maxlength="16"
+          title="Calling AE Title for C-ECHO" class="mono"
+          style="width:130px; padding:0.25rem 0.45rem; border:1px solid var(--border); border-radius:4px;">
         <button type="button" class="btn btn-sm"
-          onclick="runConnectivityTest('/api/test-echo', {host: '{{ dest.ip_address }}', port: {{ dest.port }}, called_aet: '{{ dest.ae_title }}'}, 'dest-test-res')">C-ECHO</button>
+          onclick="runEchoTest('{{ dest.ip_address }}', {{ dest.port }}, '{{ dest.ae_title }}', 'dest-test-res')">C-ECHO</button>
       {% endif %}
       <span id="dest-test-res" class="test-result"></span>
     {% endif %}
